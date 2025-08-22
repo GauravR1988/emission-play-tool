@@ -195,10 +195,12 @@
             const yValues = xValues.map(x => calculateEmissions(x));
             const maxEmission = Math.max(...yValues);
 
-            // Create dynamic legend text
-            const legendText = `${currentTraffic.charAt(0).toUpperCase() + currentTraffic.slice(1)} Traffic - 
-                              ${currentWeather.charAt(0).toUpperCase() + currentWeather.slice(1)} Weather - 
-                              ${currentVehicle.charAt(0).toUpperCase() + currentVehicle.slice(1)}`;
+            // Create vertical legend text
+            const legendText = [
+                `Traffic: ${currentTraffic.charAt(0).toUpperCase() + currentTraffic.slice(1)}`,
+                `Weather: ${currentWeather.charAt(0).toUpperCase() + currentWeather.slice(1)}`,
+                `Vehicle: ${currentVehicle.charAt(0).toUpperCase() + currentVehicle.slice(1)}`
+            ].join('<br>');
 
             const trace = {
                 x: xValues,
@@ -217,7 +219,7 @@
             const layout = {
                 title: {
                     text: 'CO₂ Emissions (kg/hour)',
-                    font: { color: '#fff', size: 12 }
+                    font: { color: '#fff', size: 14 }
                 },
                 plot_bgcolor: '#1a1a1a',
                 paper_bgcolor: '#1a1a1a',
@@ -225,37 +227,43 @@
                     title: 'Time (hours)',
                     gridcolor: '#333',
                     color: '#fff',
-                    tickfont: { size: 9 },
-                    range: [0, 10]
+                    tickfont: { size: 10 },
+                    range: [0, 10],
+                    dtick: 2
                 },
                 yaxis: {
                     title: 'CO₂ (kg)',
                     gridcolor: '#333',
                     color: '#fff',
-                    tickfont: { size: 9 },
+                    tickfont: { size: 10 },
                     range: [0, 500],
-                    automargin: true
+                    dtick: 100
                 },
                 margin: { 
-                    l: 45,
-                    r: 20,
-                    t: 30,
-                    b: 35,
+                    l: 50,
+                    r: 150,
+                    t: 40,
+                    b: 40,
                     pad: 4
                 },
                 showlegend: true,
                 legend: {
-                    x: 0.02,
+                    x: 1.02,
                     y: 0.98,
+                    xanchor: 'left',
+                    yanchor: 'top',
                     font: { 
                         color: '#fff',
-                        size: 10
+                        size: 11
                     },
                     bgcolor: 'rgba(0,0,0,0.5)',
                     bordercolor: '#333',
-                    borderwidth: 1
+                    borderwidth: 1,
+                    orientation: 'v'
                 },
-                autosize: true
+                width: 500,
+                height: 270,
+                autosize: false
             };
 
             Plotly.newPlot('graph', [trace], layout);
