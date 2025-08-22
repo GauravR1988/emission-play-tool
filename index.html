@@ -16,7 +16,7 @@
         }
 
         .container {
-            width: 500px;
+            width: 550px;
             height: 270px;
             padding: 15px;
             background: #1a1a1a;
@@ -169,15 +169,20 @@
         }
 
         function calculateTreeOffset(maxEmission) {
-            const CO2_PER_TREE_PER_YEAR = 22;
+            const CO2_PER_TREE_PER_YEAR = 22; // kg CO2 per tree per year
             const OPERATION_HOURS_PER_DAY = 8;
-            const OPERATION_DAYS_PER_YEAR = 260;
+            const OPERATION_DAYS_PER_YEAR = 260; // Working days only
             
+            // Calculate total CO2 over multiple years
             const annualCO2 = maxEmission * OPERATION_HOURS_PER_DAY * OPERATION_DAYS_PER_YEAR;
+            const fiveYearCO2 = annualCO2 * 5;
+            const tenYearCO2 = annualCO2 * 10;
+            const twentyYearCO2 = annualCO2 * 20;
             
-            const treesFor5Years = Math.ceil(annualCO2 / (CO2_PER_TREE_PER_YEAR * 5));
-            const treesFor10Years = Math.ceil(annualCO2 / (CO2_PER_TREE_PER_YEAR * 10));
-            const treesFor20Years = Math.ceil(annualCO2 / (CO2_PER_TREE_PER_YEAR * 20));
+            // Calculate trees needed for each period
+            const treesFor5Years = Math.ceil(fiveYearCO2 / (CO2_PER_TREE_PER_YEAR * 5));
+            const treesFor10Years = Math.ceil(tenYearCO2 / (CO2_PER_TREE_PER_YEAR * 10));
+            const treesFor20Years = Math.ceil(twentyYearCO2 / (CO2_PER_TREE_PER_YEAR * 20));
 
             return {
                 peak: maxEmission.toFixed(1),
@@ -261,7 +266,7 @@
                     borderwidth: 1,
                     orientation: 'v'
                 },
-                width: 500,
+                width: 550,
                 height: 270,
                 autosize: false
             };
