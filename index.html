@@ -69,7 +69,7 @@
         }
 
         #graph {
-            height: 160px;
+            height: 140px;
             background: #1a1a1a;
             border-radius: 8px;
             margin-bottom: 5px;
@@ -78,10 +78,11 @@
         .info-panel {
             color: #00ff00;
             font-size: 11px;
-            padding: 5px;
+            padding: 8px;
             background: rgba(0,0,0,0.3);
             border-radius: 4px;
-            text-align: center;
+            margin-top: 5px;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -122,7 +123,6 @@
         let currentWeather = 'cool';
         let currentVehicle = 'motorcycle';
 
-        // Curve shape modifiers
         const trafficCurves = {
             low: (x) => Math.pow(x, 1.2),
             mid: (x) => Math.pow(x, 1.5),
@@ -149,10 +149,50 @@
             return baseEmission * (trafficEffect/5) * (weatherEffect/5);
         }
 
-        function calculateTreesNeeded(maxEmission) {
-            // Average tree absorbs about 22kg CO2 per year
-            const treesNeeded = Math.ceil(maxEmission / 22);
-            return treesNeeded;
+        function calculateTreeOffset(maxEmission) {
+            const CO2_PER_TREE_PER_YEAR = 22;
+            const OPERATION_HOURS_PER_DAY = 8;
+            const OPERATION_DAYS_PER_YEAR = 260;
+            
+            const annualCO2 = maxEmission * OPERATION_HOURS_PER_DAY * OPERATION_DAYS_PER_YEAR;
+            
+            const treesFor5Years = Math.ceil(annualCO2 / (CO2_PER_TREE_PER_YEAR * 5));
+            const treesFor10Years = Math.ceil(annualCO2 / (CO2_PER_TREE_PER_YEAR * 10));
+            const treesFor20Years = Math.ceil(annualCO2 / (CO2_PER_TREE_PER_YEAR * 20));
+
+            return {
+                peak: maxEmission.toFixed(1),
+                annual: Math.round(annualCO2),
+                trees: {
+                    fiveYear: treesFor5Years,
+                    tenYear: treesFor10Years,
+                    twentyYear: treesFor20Years
+                }
+            };
+        }
+
+        function updateInfoPanel(maxEmission) {
+            const offset = calculateTreeOffset(maxEmission);
+            const infoPanel = document.getElementById('infoPanel');
+            
+            infoPanel.innerHTML = `
+                <div style="display: flex; justify-content: space-around; align-items: center;">
+                    <div style="border-right: 1px solid #333; padding-right: 10px">
+                        Peak: ${offset.peak} kg CO₂/hr
+                        <br>
+                        Annual: ${offset.annual} kg CO₂
+                    </div>
+                    <div style="text-align: left; padding-left: 10px">
+                        Trees needed for offset:
+                        <br>
+                        🌳 ${offset.trees.fiveYear} trees for 5 years
+                        <br>
+                        🌳 ${offset.trees.tenYear} trees for 10 years
+                        <br>
+                        🌳 ${offset.trees.twentyYear} trees for 20 years
+                    </div>
+                </div>
+            `;
         }
 
         function updateGraph() {
@@ -197,15 +237,9 @@
             };
 
             Plotly.newPlot('graph', [trace], layout);
-
-            // Update info panel
-            const treesNeeded = calculateTreesNeeded(maxEmission);
-            document.getElementById('infoPanel').innerHTML = 
-                `Peak Emission: ${maxEmission.toFixed(1)} kg CO₂/hr | 
-                 Trees needed for offset: ${treesNeeded} trees/year`;
+            updateInfoPanel(maxEmission);
         }
 
-        // Event listeners for buttons
         document.querySelectorAll('.control-btn').forEach(button => {
             button.addEventListener('click', function() {
                 this.parentElement.querySelectorAll('.control-btn')
