@@ -5,33 +5,35 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         body {
-            background: #111;
+            background: #000;
             margin: 0;
-            padding: 10px;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
         .container {
-            width: 550px;
-            height: 250px;
-            padding: 15px;
-            font-family: Arial, sans-serif;
+            width: 800px;
+            height: 400px;
+            padding: 20px;
             background: #1a1a1a;
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
         }
 
         .controls {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            gap: 5px;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            gap: 10px;
         }
 
         .control-group {
             background: linear-gradient(145deg, #2a2a2a, #333);
-            padding: 8px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: inset 0 0 10px rgba(255,255,255,0.1);
             flex: 1;
@@ -39,50 +41,66 @@
 
         .control-label {
             color: #fff;
-            font-size: 12px;
+            font-size: 16px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             text-shadow: 0 0 5px rgba(255,255,255,0.3);
         }
 
         .button-group {
             display: flex;
-            gap: 5px;
+            gap: 8px;
         }
 
         .control-btn {
-            padding: 4px 8px;
+            padding: 8px 15px;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
             color: #fff;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 11px;
             flex: 1;
+            font-size: 14px;
+            box-shadow: 
+                inset 0 0 5px rgba(255,255,255,0.1),
+                0 2px 5px rgba(0,0,0,0.2);
         }
 
         .control-btn.active {
             background: linear-gradient(145deg, #4a4a4a, #3a3a3a);
-            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+            box-shadow: 
+                inset 0 0 10px rgba(255,255,255,0.2),
+                0 0 15px rgba(255,255,255,0.1);
             transform: scale(1.05);
         }
 
         #graph {
-            height: 140px;
+            height: 300px;
             background: #1a1a1a;
             border-radius: 8px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         .info-panel {
             color: #00ff00;
-            font-size: 11px;
-            padding: 8px;
+            font-size: 14px;
+            padding: 10px;
             background: rgba(0,0,0,0.3);
-            border-radius: 4px;
-            margin-top: 5px;
-            line-height: 1.4;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .emissions-info {
+            flex: 1;
+            padding-right: 20px;
+        }
+
+        .trees-info {
+            flex: 1;
+            text-align: right;
         }
     </style>
 </head>
@@ -115,9 +133,11 @@
             </div>
         </div>
         <div id="graph"></div>
-        <div class="info-panel" id="infoPanel"></div>
+        <div class="info-panel">
+            <div class="emissions-info" id="emissionsInfo"></div>
+            <div class="trees-info" id="treesInfo"></div>
+        </div>
     </div>
-
     <script>
         let currentTraffic = 'low';
         let currentWeather = 'cool';
@@ -146,13 +166,20 @@
             const trafficEffect = trafficCurves[currentTraffic](x);
             const weatherEffect = weatherEffects[currentWeather](x);
             
-            return baseEmission * (trafficEffect/5) * (weatherEffect/5);
+            let emission = baseEmission * (trafficEffect/5) * (weatherEffect/5);
+            
+            // Smooth transition at the end
+            if (x > 9) {
+                emission = emission * (1 - (x-9));
+            }
+            
+            return emission;
         }
 
         function calculateTreeOffset(maxEmission) {
-            const CO2_PER_TREE_PER_YEAR = 22;
+            const CO2_PER_TREE_PER_YEAR = 22; // kg
             const OPERATION_HOURS_PER_DAY = 8;
-            const OPERATION_DAYS_PER_YEAR = 260;
+            const OPERATION_DAYS_PER_YEAR = 260; // Working days only
             
             const annualCO2 = maxEmission * OPERATION_HOURS_PER_DAY * OPERATION_DAYS_PER_YEAR;
             
@@ -171,30 +198,6 @@
             };
         }
 
-        function updateInfoPanel(maxEmission) {
-            const offset = calculateTreeOffset(maxEmission);
-            const infoPanel = document.getElementById('infoPanel');
-            
-            infoPanel.innerHTML = `
-                <div style="display: flex; justify-content: space-around; align-items: center;">
-                    <div style="border-right: 1px solid #333; padding-right: 10px">
-                        Peak: ${offset.peak} kg CO₂/hr
-                        <br>
-                        Annual: ${offset.annual} kg CO₂
-                    </div>
-                    <div style="text-align: left; padding-left: 10px">
-                        Trees needed for offset:
-                        <br>
-                        🌳 ${offset.trees.fiveYear} trees for 5 years
-                        <br>
-                        🌳 ${offset.trees.tenYear} trees for 10 years
-                        <br>
-                        🌳 ${offset.trees.twentyYear} trees for 20 years
-                    </div>
-                </div>
-            `;
-        }
-
         function updateGraph() {
             const xValues = Array.from({length: 101}, (_, i) => i/10);
             const yValues = xValues.map(x => calculateEmissions(x));
@@ -207,7 +210,9 @@
                 line: {
                     color: currentVehicle === 'motorcycle' ? '#ff00ff' : 
                            currentVehicle === 'scooter' ? '#00ffff' : '#00ff00',
-                    width: 3
+                    width: 3,
+                    shape: 'spline',
+                    smoothing: 1.3
                 },
                 name: 'CO₂ Emissions'
             };
@@ -223,23 +228,39 @@
                     title: 'Time (hours)',
                     gridcolor: '#333',
                     color: '#fff',
-                    tickfont: { size: 10 }
+                    tickfont: { size: 10 },
+                    range: [0, 10]
                 },
                 yaxis: {
                     title: 'CO₂ (kg)',
                     gridcolor: '#333',
                     color: '#fff',
-                    range: [0, 200],
-                    tickfont: { size: 10 }
+                    tickfont: { size: 10 },
+                    range: [0, 350],
+                    automargin: true
                 },
-                margin: { l: 50, r: 20, t: 30, b: 40 },
-                showlegend: false
+                margin: { 
+                    l: 50,
+                    r: 30,
+                    t: 30,
+                    b: 40,
+                    pad: 5
+                },
+                showlegend: false,
+                autosize: true
             };
 
             Plotly.newPlot('graph', [trace], layout);
-            updateInfoPanel(maxEmission);
+
+            // Update info panels
+            const offset = calculateTreeOffset(maxEmission);
+            document.getElementById('emissionsInfo').innerHTML = 
+                `Peak: ${offset.peak} kg CO₂/hr | Annual: ${offset.annual} kg CO₂`;
+            document.getElementById('treesInfo').innerHTML = 
+                `🌳 ${offset.trees.fiveYear} trees (5yr) | ${offset.trees.tenYear} trees (10yr) | ${offset.trees.twentyYear} trees (20yr)`;
         }
 
+        // Event listeners for buttons
         document.querySelectorAll('.control-btn').forEach(button => {
             button.addEventListener('click', function() {
                 this.parentElement.querySelectorAll('.control-btn')
@@ -254,6 +275,7 @@
             });
         });
 
+        // Initial graph
         updateGraph();
     </script>
 </body>
