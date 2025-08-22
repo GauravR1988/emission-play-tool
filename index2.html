@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CO2 Emissions Play Tool</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .container {
+            width: 800px;
+            height: 400px;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .slider-container {
+            width: 300px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 15px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+
+        .slider:hover {
+            opacity: 1;
+        }
+
+        .slider-label {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        #graph {
+            height: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <div class="slider-container">
+                <div class="slider-label">Traffic Level: <span id="trafficValue">5</span></div>
+                <input type="range" min="0" max="10" value="5" class="slider" id="trafficSlider">
+            </div>
+            <div class="slider-container">
+                <div class="slider-label">Weather Condition: <span id="weatherValue">5</span></div>
+                <input type="range" min="2" max="8" value="5" class="slider" id="weatherSlider">
+            </div>
+        </div>
+        <div id="graph"></div>
+    </div>
+
+    <script>
+        // Initialize variables
+        let trafficLevel = 5;
+        let weatherCondition = 5;
+
+        // Function to calculate CO2 emissions
+        function calculateEmissions(traffic, weather) {
+            let points = [];
+            for(let i = 0; i <= 10; i++) {
+                // Formula to simulate emissions based on traffic and weather
+                let emission = (i * weather/5) * Math.sqrt(i) * 5;
+                points.push(emission);
+            }
+            return points;
+        }
+
+        // Function to update the graph
+        function updateGraph() {
+            let xValues = Array.from({length: 11}, (_, i) => i);
+            
+            let trace1 = {
+                x: xValues,
+                y: calculateEmissions(trafficLevel, 2),
+                name: 'Weather 2',
+                line: {color: 'rgb(0, 50, 150)'}
+            };
+
+            let trace2 = {
+                x: xValues,
+                y: calculateEmissions(trafficLevel, 5),
+                name: 'Weather 5',
+                line: {color: 'rgb(0, 100, 200)'}
+            };
+
+            let trace3 = {
+                x: xValues,
+                y: calculateEmissions(trafficLevel, 8),
+                name: 'Weather 8',
+                line: {color: 'rgb(100, 100, 255)'}
+            };
+
+            let layout = {
+                title: 'CO2 Emissions by Traffic and Weather',
+                xaxis: {
+                    title: 'Traffic Level',
+                    range: [0, 10]
+                },
+                yaxis: {
+                    title: 'CO2 Emissions (kg)',
+                    range: [0, 250]
+                },
+                showlegend: true
+            };
+
+            Plotly.newPlot('graph', [trace1, trace2, trace3], layout);
+        }
+
+        // Event listeners for sliders
+        document.getElementById('trafficSlider').addEventListener('input', function(e) {
+            trafficLevel = parseInt(e.target.value);
+            document.getElementById('trafficValue').textContent = trafficLevel;
+            updateGraph();
+        });
+
+        document.getElementById('weatherSlider').addEventListener('input', function(e) {
+            weatherCondition = parseInt(e.target.value);
+            document.getElementById('weatherValue').textContent = weatherCondition;
+            updateGraph();
+        });
+
+        // Initial graph
+        updateGraph();
+    </script>
+</body>
+</html>
