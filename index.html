@@ -9,6 +9,7 @@
             height: 400px;
             padding: 20px;
             font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #e4e8ec);
         }
 
         .controls {
@@ -19,6 +20,10 @@
 
         .slider-container {
             width: 300px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .slider {
@@ -29,6 +34,17 @@
             outline: none;
             opacity: 0.7;
             transition: opacity .2s;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
         }
 
         .slider:hover {
@@ -55,11 +71,11 @@
         <div class="controls">
             <div class="slider-container">
                 <div class="slider-label">Traffic Level: <span id="trafficValue">5</span></div>
-                <input type="range" min="0" max="10" value="5" class="slider" id="trafficSlider">
+                <input type="range" min="0" max="10" value="5" step="0.1" class="slider" id="trafficSlider">
             </div>
             <div class="slider-container">
                 <div class="slider-label">Weather Condition: <span id="weatherValue">5</span></div>
-                <input type="range" min="2" max="8" value="5" class="slider" id="weatherSlider">
+                <input type="range" min="2" max="8" value="5" step="0.1" class="slider" id="weatherSlider">
             </div>
         </div>
         <div id="graph"></div>
@@ -73,9 +89,11 @@
         // Function to calculate CO2 emissions
         function calculateEmissions(traffic, weather) {
             let points = [];
-            for(let i = 0; i <= 10; i++) {
-                // Formula to simulate emissions based on traffic and weather
-                let emission = (i * weather/5) * Math.sqrt(i) * 5;
+            for(let i = 0; i <= 10; i += 0.1) {
+                // Modified formula to create more realistic curves
+                let emission = (i * (weather/4)) * (1 + Math.pow(i/10, 1.5)) * 15;
+                // Add some randomness to make it look more natural
+                emission *= (1 + Math.random() * 0.05);
                 points.push(emission);
             }
             return points;
@@ -83,55 +101,94 @@
 
         // Function to update the graph
         function updateGraph() {
-            let xValues = Array.from({length: 11}, (_, i) => i);
+            let xValues = Array.from({length: 101}, (_, i) => i/10);
             
+            let currentWeather = parseFloat(document.getElementById('weatherSlider').value);
+
+            // Calculate emissions for current weather and +/- 1
             let trace1 = {
                 x: xValues,
-                y: calculateEmissions(trafficLevel, 2),
-                name: 'Weather 2',
-                line: {color: 'rgb(0, 50, 150)'}
+                y: calculateEmissions(trafficLevel, Math.max(2, currentWeather - 3)),
+                name: `Weather ${Math.max(2, (currentWeather - 3)).toFixed(1)}`,
+                line: {
+                    color: 'rgb(0, 50, 150)',
+                    width: 2
+                }
             };
 
             let trace2 = {
                 x: xValues,
-                y: calculateEmissions(trafficLevel, 5),
-                name: 'Weather 5',
-                line: {color: 'rgb(0, 100, 200)'}
+                y: calculateEmissions(trafficLevel, currentWeather),
+                name: `Weather ${currentWeather.toFixed(1)}`,
+                line: {
+                    color: 'rgb(0, 100, 200)',
+                    width: 3
+                }
             };
 
             let trace3 = {
                 x: xValues,
-                y: calculateEmissions(trafficLevel, 8),
-                name: 'Weather 8',
-                line: {color: 'rgb(100, 100, 255)'}
+                y: calculateEmissions(trafficLevel, Math.min(8, currentWeather + 3)),
+                name: `Weather ${Math.min(8, (currentWeather + 3)).toFixed(1)}`,
+                line: {
+                    color: 'rgb(100, 100, 255)',
+                    width: 2
+                }
+            };
+
+            // Add vertical line for current traffic level
+            let traceLine = {
+                x: [trafficLevel, trafficLevel],
+                y: [0, 250],
+                name: 'Current Traffic',
+                line: {
+                    color: 'rgba(255, 0, 0, 0.5)',
+                    width: 2,
+                    dash: 'dash'
+                }
             };
 
             let layout = {
-                title: 'CO2 Emissions by Traffic and Weather',
+                title: {
+                    text: 'CO2 Emissions by Traffic and Weather',
+                    font: { size: 24 }
+                },
                 xaxis: {
                     title: 'Traffic Level',
-                    range: [0, 10]
+                    range: [0, 10],
+                    gridcolor: '#eee'
                 },
                 yaxis: {
                     title: 'CO2 Emissions (kg)',
-                    range: [0, 250]
+                    range: [0, 250],
+                    gridcolor: '#eee'
                 },
-                showlegend: true
+                showlegend: true,
+                legend: {
+                    x: 0.7,
+                    y: 0.1
+                },
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white',
+                transition: {
+                    duration: 300,
+                    easing: 'cubic-in-out'
+                }
             };
 
-            Plotly.newPlot('graph', [trace1, trace2, trace3], layout);
+            Plotly.react('graph', [trace1, trace2, trace3, traceLine], layout);
         }
 
         // Event listeners for sliders
         document.getElementById('trafficSlider').addEventListener('input', function(e) {
-            trafficLevel = parseInt(e.target.value);
-            document.getElementById('trafficValue').textContent = trafficLevel;
+            trafficLevel = parseFloat(e.target.value);
+            document.getElementById('trafficValue').textContent = trafficLevel.toFixed(1);
             updateGraph();
         });
 
         document.getElementById('weatherSlider').addEventListener('input', function(e) {
-            weatherCondition = parseInt(e.target.value);
-            document.getElementById('weatherValue').textContent = weatherCondition;
+            weatherCondition = parseFloat(e.target.value);
+            document.getElementById('weatherValue').textContent = weatherCondition.toFixed(1);
             updateGraph();
         });
 
