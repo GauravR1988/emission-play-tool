@@ -172,21 +172,26 @@
             const CO2_PER_TREE_PER_YEAR = 22; // kg CO2 per tree per year
             const OPERATION_HOURS_PER_DAY = 8;
             const OPERATION_DAYS_PER_YEAR = 260; // Working days only
-            
-            // Calculate total CO2 over multiple years
+
+            // Calculate lifetime CO2 for each period
             const annualCO2 = maxEmission * OPERATION_HOURS_PER_DAY * OPERATION_DAYS_PER_YEAR;
-            const fiveYearCO2 = annualCO2 * 5;
-            const tenYearCO2 = annualCO2 * 10;
-            const twentyYearCO2 = annualCO2 * 20;
-            
-            // Calculate trees needed for each period
-            const treesFor5Years = Math.ceil(fiveYearCO2 / (CO2_PER_TREE_PER_YEAR * 5));
-            const treesFor10Years = Math.ceil(tenYearCO2 / (CO2_PER_TREE_PER_YEAR * 10));
-            const treesFor20Years = Math.ceil(twentyYearCO2 / (CO2_PER_TREE_PER_YEAR * 20));
+            const fiveYearTotal = annualCO2 * 5;    // Total CO2 over 5 years
+            const tenYearTotal = annualCO2 * 10;    // Total CO2 over 10 years
+            const twentyYearTotal = annualCO2 * 20;  // Total CO2 over 20 years
+
+            // Calculate trees needed for the total CO2 in each period
+            const treesFor5Years = Math.ceil(fiveYearTotal / (CO2_PER_TREE_PER_YEAR * 5));
+            const treesFor10Years = Math.ceil(tenYearTotal / (CO2_PER_TREE_PER_YEAR * 10));
+            const treesFor20Years = Math.ceil(twentyYearTotal / (CO2_PER_TREE_PER_YEAR * 20));
 
             return {
                 peak: maxEmission.toFixed(1),
                 annual: Math.round(annualCO2),
+                totalCO2: {
+                    fiveYear: Math.round(fiveYearTotal),
+                    tenYear: Math.round(tenYearTotal),
+                    twentyYear: Math.round(twentyYearTotal)
+                },
                 trees: {
                     fiveYear: treesFor5Years,
                     tenYear: treesFor10Years,
@@ -275,9 +280,9 @@
 
             const offset = calculateTreeOffset(maxEmission);
             document.getElementById('emissionsInfo').innerHTML = 
-                `Peak: ${offset.peak} kg CO₂/hr | Annual: ${offset.annual} kg CO₂`;
+                `Peak: ${offset.peak} kg CO₂/hr | Annual: ${offset.annual.toLocaleString()} kg CO₂`;
             document.getElementById('treesInfo').innerHTML = 
-                `🌳 ${offset.trees.fiveYear} trees (5yr) | ${offset.trees.tenYear} trees (10yr) | ${offset.trees.twentyYear} trees (20yr)`;
+                `🌳 Trees needed: ${offset.trees.fiveYear.toLocaleString()} (5yr) | ${offset.trees.tenYear.toLocaleString()} (10yr) | ${offset.trees.twentyYear.toLocaleString()} (20yr)`;
         }
 
         document.querySelectorAll('.control-btn').forEach(button => {
